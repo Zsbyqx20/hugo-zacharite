@@ -1,6 +1,11 @@
 <header class="site-header">
   <a class="brand" href="{{ "/" | relURL }}">
-    <span class="brand-title">{{ site.Title }}</span>
+    <span class="brand-title-row">
+      <span class="brand-title">{{ site.Title }}</span>
+      {{ with site.Params.homeAvatar }}
+        <img class="brand-avatar" src="{{ . | relURL }}" alt="" aria-hidden="true">
+      {{ end }}
+    </span>
     {{ with site.Params.description }}<span class="brand-subtitle">{{ . }}</span>{{ end }}
   </a>
   <div class="header-controls">

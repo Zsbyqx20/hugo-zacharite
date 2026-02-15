@@ -6,6 +6,7 @@ const THEME_LABELS = {
   light: 'Light',
   dark: 'Dark',
 };
+const THEME_TRANSITION_DURATION_MS = 520;
 
 const getThemeConfig = () => {
   const config = window.__zachariteTheme || {};
@@ -106,10 +107,54 @@ const initThemeToggle = () => {
   }
 
   if (themeToggle) {
+    const runThemeTransition = (nextMode) => {
+      const prefersReducedMotion = window.matchMedia
+        ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        : false;
+      const canAnimateThemeTransition =
+        typeof document.startViewTransition === 'function' && !prefersReducedMotion;
+
+      if (!canAnimateThemeTransition) {
+        setTheme(nextMode, true, true);
+        return;
+      }
+
+      const toggleBounds = themeToggle.getBoundingClientRect();
+      const originX = toggleBounds.left + toggleBounds.width / 2;
+      const originY = toggleBounds.top + toggleBounds.height / 2;
+      const maxX = Math.max(originX, window.innerWidth - originX);
+      const maxY = Math.max(originY, window.innerHeight - originY);
+      const endRadius = Math.hypot(maxX, maxY);
+
+      const transition = document.startViewTransition(() => {
+        setTheme(nextMode, true, true);
+      });
+
+      transition.ready
+        .then(() => {
+          document.documentElement.animate(
+            {
+              clipPath: [
+                `circle(0px at ${originX}px ${originY}px)`,
+                `circle(${endRadius}px at ${originX}px ${originY}px)`,
+              ],
+            },
+            {
+              duration: THEME_TRANSITION_DURATION_MS,
+              easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+              pseudoElement: '::view-transition-new(root)',
+            }
+          );
+        })
+        .catch(() => {
+          // Ignore transition setup errors and keep the updated theme.
+        });
+    };
+
     themeToggle.addEventListener('click', () => {
       const currentMode = root.dataset.theme === 'dark' ? 'dark' : 'light';
       const nextMode = currentMode === 'dark' ? 'light' : 'dark';
-      setTheme(nextMode, true, true);
+      runThemeTransition(nextMode);
     });
   }
 
@@ -129,6 +174,37 @@ const initThemeToggle = () => {
 };
 
 initThemeToggle();
+
+const initBackToTop = () => {
+  const backToTop = document.querySelector('[data-back-to-top]');
+  if (!backToTop) return;
+
+  const visibilityOffset = 400;
+  const prefersReducedMotion = window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
+
+  const syncVisibility = () => {
+    if (window.scrollY > visibilityOffset) {
+      backToTop.classList.add('is-visible');
+    } else {
+      backToTop.classList.remove('is-visible');
+    }
+  };
+
+  backToTop.addEventListener('click', (event) => {
+    event.preventDefault();
+    window.scrollTo({
+      top: 0,
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+    });
+  });
+
+  window.addEventListener('scroll', syncVisibility, { passive: true });
+  syncVisibility();
+};
+
+initBackToTop();
 
 const searchInput = document.querySelector('[data-search-input]');
 
