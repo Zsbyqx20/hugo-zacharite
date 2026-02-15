@@ -1,0 +1,31 @@
+{{ define "main" }}
+  <section class="intro">
+    <h1>{{ with site.Params.author }}{{ . }}{{ else }}{{ site.Title }}{{ end }}</h1>
+    {{ with .Content }}
+      <div class="prose intro-copy">{{ . }}</div>
+    {{ else }}
+      {{ with site.Params.homeOneLineBio }}<p class="intro-bio">{{ . }}</p>{{ else }}{{ with site.Params.description }}<p class="intro-bio">{{ . }}</p>{{ end }}{{ end }}
+    {{ end }}
+    <ul class="profile-links" aria-label="Profile links">
+      {{ with site.Params.github }}<li><a href="{{ . }}">GitHub</a></li>{{ end }}
+      {{ with site.Params.linkedin }}<li><a href="{{ . }}">LinkedIn</a></li>{{ end }}
+      {{ with site.Params.email }}<li><a href="mailto:{{ . }}">Email</a></li>{{ end }}
+      {{ with or site.Params.x site.Params.twitter }}<li><a href="{{ . }}">X</a></li>{{ end }}
+    </ul>
+  </section>
+
+  <section>
+    <h2>Recent posts</h2>
+    {{ $posts := where site.RegularPages "Section" "posts" }}
+    <ul class="post-list-compact">
+      {{ range first 3 ($posts.ByDate.Reverse) }}
+        <li>
+          <a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>
+          <span class="muted">{{ .Date | time.Format ":date_medium" }}</span>
+        </li>
+      {{ else }}
+        <li>No posts yet. Create one with <code>hugo new content posts/my-first-post.md</code>.</li>
+      {{ end }}
+    </ul>
+  </section>
+{{ end }}

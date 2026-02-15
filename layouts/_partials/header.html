@@ -1,0 +1,7 @@
+<header class="site-header">
+  <a class="brand" href="{{ "/" | relURL }}">
+    <span class="brand-title">{{ site.Title }}</span>
+    {{ with site.Params.description }}<span class="brand-subtitle">{{ . }}</span>{{ end }}
+  </a>
+  {{ partial "menu.html" (dict "menuID" "main" "page" .) }}
+</header>

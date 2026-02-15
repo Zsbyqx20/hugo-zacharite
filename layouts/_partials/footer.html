@@ -1,0 +1,4 @@
+<footer class="site-footer">
+  <small>© {{ now.Year }} {{ with site.Params.author }}{{ . }}{{ else }}{{ site.Title }}{{ end }}</small>
+  {{ with site.Params.github }}<a href="{{ . }}" rel="me">GitHub</a>{{ end }}
+</footer>

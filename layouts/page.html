@@ -1,0 +1,12 @@
+{{ define "main" }}
+<article class="article">
+  <header>
+    <h1>{{ .Title }}</h1>
+    {{ if ne .Section "" }}<p class="muted">{{ .Date | time.Format ":date_long" }}</p>{{ end }}
+  </header>
+  <div class="article-content">
+    {{ .Content }}
+  </div>
+  {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
+</article>
+{{ end }}
