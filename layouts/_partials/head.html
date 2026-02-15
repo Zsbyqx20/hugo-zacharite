@@ -10,5 +10,35 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;500;700&family=Cascadia+Mono:wght@400;600;700&display=swap">
 <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s · %s" .Title site.Title }}{{ end }}</title>
+{{- $themeParams := site.Params.theme | default dict -}}
+{{- $themeDefault := lower (default "auto" (index $themeParams "default")) -}}
+{{- $themeStorageKey := default "zacharite-theme" (index $themeParams "storageKey") -}}
+{{- $themeConfig := dict "defaultMode" $themeDefault "storageKey" $themeStorageKey -}}
+<script>
+  window.__zachariteTheme = {{ $themeConfig | jsonify | safeJS }};
+  (function () {
+    var modes = { light: true, dark: true, auto: true };
+    var config = window.__zachariteTheme || {};
+    var storageKey = typeof config.storageKey === "string" && config.storageKey ? config.storageKey : "zacharite-theme";
+    var defaultMode = modes[config.defaultMode] ? config.defaultMode : "auto";
+    var selectedMode = defaultMode;
+
+    try {
+      var savedMode = localStorage.getItem(storageKey);
+      if (modes[savedMode]) {
+        selectedMode = savedMode;
+      }
+    } catch (error) {
+      // Ignore storage failures and continue with defaults.
+    }
+
+    var preferredDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var effectiveMode = selectedMode === "auto" ? (preferredDark ? "dark" : "light") : selectedMode;
+
+    document.documentElement.classList.add("js");
+    document.documentElement.dataset.themeMode = selectedMode;
+    document.documentElement.dataset.theme = effectiveMode;
+  })();
+</script>
 {{ partialCached "head/css.html" . }}
 {{ partialCached "head/js.html" . }}

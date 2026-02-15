@@ -3,5 +3,20 @@
     <span class="brand-title">{{ site.Title }}</span>
     {{ with site.Params.description }}<span class="brand-subtitle">{{ . }}</span>{{ end }}
   </a>
-  {{ partial "menu.html" (dict "menuID" "main" "page" .) }}
+  <div class="header-controls">
+    {{ partial "menu.html" (dict "menuID" "main" "page" .) }}
+    {{- $themeParams := site.Params.theme | default dict -}}
+    {{- $themeToggleEnabled := ne (default true (index $themeParams "enableToggle")) false -}}
+    {{- if $themeToggleEnabled }}
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme">
+      <span class="visually-hidden" data-theme-label>Theme</span>
+      <span class="theme-switch-track" aria-hidden="true">
+        <span class="theme-switch-thumb">
+          <img class="theme-toggle-icon" data-theme-icon="light" src="{{ "sun.svg" | relURL }}" alt="" aria-hidden="true">
+          <img class="theme-toggle-icon" data-theme-icon="dark" src="{{ "moon.svg" | relURL }}" alt="" aria-hidden="true" hidden>
+        </span>
+      </span>
+    </button>
+    {{- end }}
+  </div>
 </header>

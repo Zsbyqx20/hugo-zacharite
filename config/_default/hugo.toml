@@ -1,0 +1,4 @@
+[params.theme]
+  enableToggle = true
+  default = "auto"
+  storageKey = "zacharite-theme"
