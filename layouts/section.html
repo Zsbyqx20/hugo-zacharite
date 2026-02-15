@@ -1,6 +1,6 @@
 {{ define "main" }}
-  <h1>{{ .Title }}</h1>
-  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  <h1 class="page-title">{{ .Title }}</h1>
+  {{ with .Content }}<div class="prose page-prose">{{ . }}</div>{{ end }}
   <div class="post-list">
     {{ range .Pages.ByDate.Reverse }}
       <article class="post-card">

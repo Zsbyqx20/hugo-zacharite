@@ -36,6 +36,17 @@ ol {
   margin: 0 0 1rem;
 }
 
+blockquote {
+  margin: 0 0 1rem;
+  padding: 0.1rem 0 0.1rem 1rem;
+  border-left: 3px solid var(--border);
+  color: var(--muted);
+}
+
+blockquote > *:last-child {
+  margin-bottom: 0;
+}
+
 a {
   color: var(--accent);
   text-decoration-thickness: 1px;
@@ -121,6 +132,14 @@ a:focus-visible {
   margin-bottom: 0.5rem;
 }
 
+.page-title {
+  margin-bottom: 0.5rem;
+}
+
+.page-prose {
+  margin-bottom: 1rem;
+}
+
 .intro-bio {
   margin-bottom: 0.75rem;
 }
@@ -163,6 +182,10 @@ a:focus-visible {
 }
 
 .search-page {
+  margin-top: 0;
+}
+
+.search-panel {
   display: grid;
   gap: 1rem;
 }
@@ -233,6 +256,35 @@ a:focus-visible {
   margin-bottom: 0;
 }
 
+.article-toc {
+  margin: 1rem 0 1.5rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  background: var(--surface);
+}
+
+.article-toc-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.article-toc[open] .article-toc-title {
+  margin-bottom: 0.5rem;
+}
+
+.article-toc ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.article-toc li {
+  margin: 0.2rem 0;
+}
+
 .article-content img {
   max-width: 100%;
   height: auto;
@@ -243,6 +295,10 @@ a:focus-visible {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
+}
+
+.article-tags {
+  margin-top: 1rem;
 }
 
 .tags a,

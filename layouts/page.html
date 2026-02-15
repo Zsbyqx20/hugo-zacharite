@@ -4,6 +4,12 @@
     <h1>{{ .Title }}</h1>
     {{ if ne .Section "" }}<p class="muted">{{ .Date | time.Format ":date_long" }}</p>{{ end }}
   </header>
+  {{ if and (.Param "showtoc") .TableOfContents }}
+    <details class="article-toc" open>
+      <summary class="article-toc-title">Contents</summary>
+      {{ .TableOfContents }}
+    </details>
+  {{ end }}
   <div class="article-content">
     {{ .Content }}
   </div>

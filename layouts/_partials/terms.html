@@ -1,7 +1,7 @@
 {{- $page := .page -}}
 {{- $taxonomy := .taxonomy -}}
 {{- with $page.GetTerms $taxonomy }}
-  <p class="tags">
+  <p class="tags article-tags">
     {{- range . -}}
       <a href="{{ .RelPermalink }}">#{{ .LinkTitle }}</a>
     {{- end -}}

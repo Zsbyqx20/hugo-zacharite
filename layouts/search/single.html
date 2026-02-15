@@ -1,32 +1,34 @@
 {{ define "main" }}
   <section class="search-page">
-    <h1>{{ .Title }}</h1>
-    {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+    <h1 class="page-title">{{ .Title }}</h1>
+    {{ with .Content }}<div class="prose page-prose">{{ . }}</div>{{ end }}
 
-    {{ $posts := where site.RegularPages "Section" "posts" }}
-    <label for="search-input" class="search-label">Search posts</label>
-    <input id="search-input" class="search-input" type="search" placeholder="Type keywords..." autocomplete="off" data-search-input>
+    <div class="search-panel">
+      {{ $posts := where site.RegularPages "Section" "posts" }}
+      <label for="search-input" class="search-label">Search posts</label>
+      <input id="search-input" class="search-input" type="search" placeholder="Type keywords..." autocomplete="off" data-search-input>
 
-    <p class="muted" data-search-count>Type to search posts.</p>
-    <p class="muted" hidden data-search-empty>No posts match your search.</p>
+      <p class="muted" data-search-count>Type to search posts.</p>
+      <p class="muted" hidden data-search-empty>No posts match your search.</p>
 
-    <ul class="search-results">
-      {{ range $posts.ByDate.Reverse }}
-        {{ $tags := .GetTerms "tags" }}
-        {{ $searchText := printf "%s %s %s" .Title .Plain (delimit .Params.tags " ") | lower }}
-        <li class="search-result" data-search-item data-search-text="{{ $searchText }}">
-          <a href="{{ .RelPermalink }}" data-highlight-target>{{ .LinkTitle }}</a>
-          <span class="muted">{{ .Date | time.Format ":date_medium" }}</span>
-          {{ with .Summary }}<p data-highlight-target>{{ . | plainify | htmlUnescape | replaceRE "\\s+" " " | strings.TrimSpace | truncate 160 }}</p>{{ end }}
-          {{ with $tags }}
-            <div class="tags" aria-label="Tags">
-              {{ range . }}<a href="{{ .RelPermalink }}" data-highlight-target>#{{ .LinkTitle }}</a>{{ end }}
-            </div>
-          {{ end }}
-        </li>
-      {{ else }}
-        <li>No posts yet.</li>
-      {{ end }}
-    </ul>
+      <ul class="search-results">
+        {{ range $posts.ByDate.Reverse }}
+          {{ $tags := .GetTerms "tags" }}
+          {{ $searchText := printf "%s %s %s" .Title .Plain (delimit .Params.tags " ") | lower }}
+          <li class="search-result" data-search-item data-search-text="{{ $searchText }}">
+            <a href="{{ .RelPermalink }}" data-highlight-target>{{ .LinkTitle }}</a>
+            <span class="muted">{{ .Date | time.Format ":date_medium" }}</span>
+            {{ with .Summary }}<p data-highlight-target>{{ . | plainify | htmlUnescape | replaceRE "\\s+" " " | strings.TrimSpace | truncate 160 }}</p>{{ end }}
+            {{ with $tags }}
+              <div class="tags" aria-label="Tags">
+                {{ range . }}<a href="{{ .RelPermalink }}" data-highlight-target>#{{ .LinkTitle }}</a>{{ end }}
+              </div>
+            {{ end }}
+          </li>
+        {{ else }}
+          <li>No posts yet.</li>
+        {{ end }}
+      </ul>
+    </div>
   </section>
 {{ end }}
