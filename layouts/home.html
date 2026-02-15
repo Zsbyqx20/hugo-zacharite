@@ -21,7 +21,10 @@
       {{ range first 3 ($posts.ByDate.Reverse) }}
         <li>
           <a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>
-          <span class="muted">{{ .Date | time.Format ":date_medium" }}</span>
+          <span class="muted post-list-meta">
+            <span class="post-list-date">{{ .Date | time.Format ":date_medium" }}</span>
+            <span class="post-list-count">{{ .WordCount }} {{ if .Param "isCJKLanguage" }}characters{{ else }}words{{ end }}</span>
+          </span>
         </li>
       {{ else }}
         <li>No posts yet. Create one with <code>hugo new content posts/my-first-post.md</code>.</li>

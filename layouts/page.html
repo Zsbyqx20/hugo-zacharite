@@ -2,8 +2,18 @@
 <article class="article">
   <header>
     <h1>{{ .Title }}</h1>
-    {{ if ne .Section "" }}<p class="muted">{{ .Date | time.Format ":date_long" }}</p>{{ end }}
+    {{ if ne .Section "" }}
+      <p class="muted article-meta">
+        {{ .Date | time.Format ":date_long" }} ·
+        {{ .WordCount }} {{ if .Param "isCJKLanguage" }}characters{{ else }}words{{ end }} ·
+        {{ .ReadingTime }} min read
+      </p>
+    {{ end }}
   </header>
+  {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
+  {{ with .Param "license" }}
+    <p class="article-license muted">This post is licensed under {{ . }}.</p>
+  {{ end }}
   {{ if and (.Param "showtoc") .TableOfContents }}
     <details class="article-toc" open>
       <summary class="article-toc-title">Contents</summary>
@@ -13,6 +23,5 @@
   <div class="article-content">
     {{ .Content }}
   </div>
-  {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
 </article>
 {{ end }}
