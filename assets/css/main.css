@@ -6,8 +6,8 @@
   --accent: #24396b;
   --border: #d4d1c6;
   color-scheme: light;
-  --font-main: Alegreya, Iowan Old Style, Palatino Linotype, Book Antiqua, Palatino, Georgia, serif;
-  --font-mono: Cascadia Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace;
+  --font-main: Alegreya, "Noto Serif SC", Iowan Old Style, Palatino Linotype, Book Antiqua, Palatino, Georgia, serif;
+  --font-mono: Cascadia Mono, "LXGW WenKai Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace;
 }
 
 html[data-theme="dark"] {
@@ -509,6 +509,35 @@ a:focus-visible {
   font-size: 0.8rem;
   font-family: var(--font-mono);
   text-decoration: none;
+}
+
+:not(pre) > code {
+  padding: 0.12rem 0.36rem;
+  border-radius: 0.35rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.highlight,
+.chroma {
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  overflow-x: auto;
+}
+
+.highlight pre,
+.chroma pre {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  min-width: max-content;
+}
+
+.highlight pre code,
+.chroma pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 
 .muted,

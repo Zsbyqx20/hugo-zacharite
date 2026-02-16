@@ -2,3 +2,7 @@
   enableToggle = true
   default = "auto"
   storageKey = "zacharite-theme"
+
+[params.codeBlocks]
+  lightStyle = "github"
+  darkStyle = "monokai"

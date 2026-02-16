@@ -1,9 +1,27 @@
-{{- with resources.Get "css/main.css" }}
-  {{- if hugo.IsDevelopment }}
-    <link rel="stylesheet" href="{{ .RelPermalink }}">
-  {{- else }}
-    {{- with . | minify | fingerprint }}
-      <link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" crossorigin="anonymous">
-    {{- end }}
+{{- $main := resources.Get "css/main.css" -}}
+{{- $codeParams := site.Params.codeBlocks | default dict -}}
+{{- $lightStyle := lower (default "github" (index $codeParams "lightStyle")) -}}
+{{- $darkStyle := lower (default "monokai" (index $codeParams "darkStyle")) -}}
+
+{{- $lightThemePath := printf "css/chroma/light/%s.css" $lightStyle -}}
+{{- $darkThemePath := printf "css/chroma/dark/%s.css" $darkStyle -}}
+
+{{- $lightTheme := resources.Get $lightThemePath -}}
+{{- $darkTheme := resources.Get $darkThemePath -}}
+
+{{- if not $lightTheme -}}
+  {{- $lightTheme = resources.Get "css/chroma/light/github.css" -}}
+{{- end -}}
+
+{{- if not $darkTheme -}}
+  {{- $darkTheme = resources.Get "css/chroma/dark/monokai.css" -}}
+{{- end -}}
+
+{{- $styles := slice $main $lightTheme $darkTheme | resources.Concat "css/site.css" -}}
+{{- if hugo.IsDevelopment }}
+  <link rel="stylesheet" href="{{ $styles.RelPermalink }}">
+{{- else }}
+  {{- with $styles | minify | fingerprint }}
+    <link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" crossorigin="anonymous">
   {{- end }}
 {{- end }}

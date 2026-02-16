@@ -8,7 +8,8 @@
 {{- end -}}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;500;700&family=Cascadia+Mono:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;500;700&family=Cascadia+Mono:wght@400;600;700&family=Noto+Serif+SC:wght@200..900&display=swap">
+<link href="https://fontsapi.zeoseven.com/293/main/result.css" onload="this.rel='stylesheet'" rel="preload" as="style" crossorigin />
 <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s · %s" .Title site.Title }}{{ end }}</title>
 {{- $themeParams := site.Params.theme | default dict -}}
 {{- $themeDefault := lower (default "auto" (index $themeParams "default")) -}}
