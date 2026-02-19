@@ -321,15 +321,20 @@ if (searchInput) {
       const item = document.createElement('li');
       item.className = 'search-result';
 
+      const heading = document.createElement('div');
+      heading.className = 'search-result-heading';
+
       const title = document.createElement('a');
       title.href = entry.permalink;
       title.innerHTML = highlightText(entry.title || '', terms);
-      item.appendChild(title);
+      heading.appendChild(title);
 
       const date = document.createElement('span');
-      date.className = 'muted';
+      date.className = 'muted search-result-date';
       date.textContent = entry.dateDisplay || '';
-      item.appendChild(date);
+      heading.appendChild(date);
+
+      item.appendChild(heading);
 
       if (entry.summary) {
         const summary = document.createElement('p');

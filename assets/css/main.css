@@ -419,9 +419,23 @@ a:focus-visible {
   padding-bottom: 1rem;
 }
 
-.search-result > a {
+.search-result-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.9rem;
+}
+
+.search-result-heading > a {
   font-size: 1.1rem;
   font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.search-result-date {
+  white-space: nowrap;
+  text-align: right;
 }
 
 .search-result > p {
@@ -432,7 +446,7 @@ a:focus-visible {
   font-weight: 700;
 }
 
-.search-result > a .search-highlight {
+.search-result-heading > a .search-highlight {
   color: var(--accent);
 }
 
