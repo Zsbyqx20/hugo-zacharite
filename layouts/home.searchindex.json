@@ -1,0 +1,25 @@
+{{- $entries := slice -}}
+{{- $posts := where site.RegularPages "Section" "posts" -}}
+{{- range $posts.ByDate.Reverse -}}
+  {{- $summary := .Summary | plainify | htmlUnescape | replaceRE "\\s+" " " | strings.TrimSpace | truncate 160 -}}
+  {{- $tagNames := slice -}}
+  {{- $tagLinks := slice -}}
+  {{- with .GetTerms "tags" -}}
+    {{- range . -}}
+      {{- $tagNames = $tagNames | append .LinkTitle -}}
+      {{- $tagLinks = $tagLinks | append (dict "name" .LinkTitle "permalink" .RelPermalink) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $entries = $entries | append (dict
+    "title" .LinkTitle
+    "permalink" .RelPermalink
+    "dateDisplay" (.Date | time.Format ":date_medium")
+    "dateUnix" .Date.Unix
+    "summary" $summary
+    "tags" $tagLinks
+    "searchTitle" (.LinkTitle | plainify | htmlUnescape | lower)
+    "searchTags" (delimit $tagNames " " | plainify | htmlUnescape | lower)
+    "searchSummary" ($summary | lower)
+  ) -}}
+{{- end -}}
+{{- $entries | jsonify -}}

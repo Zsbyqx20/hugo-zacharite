@@ -3,32 +3,30 @@
     <h1 class="page-title">{{ .Title }}</h1>
     {{ with .Content }}<div class="prose page-prose">{{ . }}</div>{{ end }}
 
-    <div class="search-panel">
-      {{ $posts := where site.RegularPages "Section" "posts" }}
+    {{- $searchParams := site.Params.search | default dict -}}
+    {{- $searchEnabled := ne (default true (index $searchParams "enabled")) false -}}
+    {{- $indexPath := default "/search-index.json" (index $searchParams "indexPath") -}}
+    {{- $debounceMs := default 80 (index $searchParams "debounceMs") -}}
+    {{- $minQueryLength := default 1 (index $searchParams "minQueryLength") -}}
+    {{- $maxResults := default 50 (index $searchParams "maxResults") -}}
+
+    <div
+      class="search-panel"
+      data-search-enabled="{{ if $searchEnabled }}true{{ else }}false{{ end }}"
+      data-search-index-path="{{ $indexPath }}"
+      data-search-debounce-ms="{{ $debounceMs }}"
+      data-search-min-query-length="{{ $minQueryLength }}"
+      data-search-max-results="{{ $maxResults }}"
+    >
       <label for="search-input" class="search-label">Search posts</label>
       <input id="search-input" class="search-input" type="search" placeholder="Type keywords..." autocomplete="off" data-search-input>
 
       <p class="muted" data-search-count>Type to search posts.</p>
       <p class="muted" hidden data-search-empty>No posts match your search.</p>
+      <p class="muted" hidden data-search-loading>Loading search index…</p>
+      <p class="muted" hidden data-search-error>Search is temporarily unavailable.</p>
 
-      <ul class="search-results">
-        {{ range $posts.ByDate.Reverse }}
-          {{ $tags := .GetTerms "tags" }}
-          {{ $searchText := printf "%s %s %s" .Title .Plain (delimit .Params.tags " ") | lower }}
-          <li class="search-result" data-search-item data-search-text="{{ $searchText }}">
-            <a href="{{ .RelPermalink }}" data-highlight-target>{{ .LinkTitle }}</a>
-            <span class="muted">{{ .Date | time.Format ":date_medium" }}</span>
-            {{ with .Summary }}<p data-highlight-target>{{ . | plainify | htmlUnescape | replaceRE "\\s+" " " | strings.TrimSpace | truncate 160 }}</p>{{ end }}
-            {{ with $tags }}
-              <div class="tags" aria-label="Tags">
-                {{ range . }}<a href="{{ .RelPermalink }}" data-highlight-target>#{{ .LinkTitle }}</a>{{ end }}
-              </div>
-            {{ end }}
-          </li>
-        {{ else }}
-          <li>No posts yet.</li>
-        {{ end }}
-      </ul>
+      <ul class="search-results" data-search-results></ul>
     </div>
   </section>
 {{ end }}

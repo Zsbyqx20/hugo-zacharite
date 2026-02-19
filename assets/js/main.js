@@ -222,11 +222,52 @@ initBackToTop();
 const searchInput = document.querySelector('[data-search-input]');
 
 if (searchInput) {
-  const searchItems = Array.from(document.querySelectorAll('[data-search-item]'));
+  const searchPanel = searchInput.closest('[data-search-enabled]');
+  const searchEnabled = !searchPanel || searchPanel.dataset.searchEnabled !== 'false';
+  const searchIndexPath =
+    (searchPanel && typeof searchPanel.dataset.searchIndexPath === 'string' && searchPanel.dataset.searchIndexPath) ||
+    '/search-index.json';
+  const debounceMsRaw = searchPanel ? searchPanel.dataset.searchDebounceMs : '';
+  const minQueryLengthRaw = searchPanel ? searchPanel.dataset.searchMinQueryLength : '';
+  const maxResultsRaw = searchPanel ? searchPanel.dataset.searchMaxResults : '';
+  const debounceMs = Number.isInteger(Number.parseInt(debounceMsRaw, 10))
+    ? Math.max(0, Number.parseInt(debounceMsRaw, 10))
+    : 80;
+  const minQueryLength = Number.isInteger(Number.parseInt(minQueryLengthRaw, 10))
+    ? Math.max(0, Number.parseInt(minQueryLengthRaw, 10))
+    : 1;
+  const maxResults = Number.isInteger(Number.parseInt(maxResultsRaw, 10))
+    ? Math.max(1, Number.parseInt(maxResultsRaw, 10))
+    : 50;
+  const searchResults = document.querySelector('[data-search-results]');
   const searchCount = document.querySelector('[data-search-count]');
   const searchEmpty = document.querySelector('[data-search-empty]');
+  const searchLoading = document.querySelector('[data-search-loading]');
+  const searchError = document.querySelector('[data-search-error]');
+  const weightedFields = [
+    { key: 'searchTitle', weight: 6 },
+    { key: 'searchTags', weight: 4 },
+    { key: 'searchSummary', weight: 2 },
+  ];
+  let cachedIndex = null;
+  let loadIndexPromise = null;
+  let latestSearchRunId = 0;
+  let hasLoadFailure = false;
 
   const normalize = (value) => value.toLowerCase().trim().replace(/\s+/g, ' ');
+  const tokenize = (query) => (query ? query.split(' ').filter(Boolean) : []);
+  const debounce = (fn, waitMs) => {
+    let timeoutId = null;
+    return (...args) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = window.setTimeout(() => {
+        timeoutId = null;
+        fn(...args);
+      }, waitMs);
+    };
+  };
   const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const escapeHtml = (value) =>
     value
@@ -250,42 +291,215 @@ if (searchInput) {
       .join('');
   };
 
-  searchItems.forEach((item) => {
-    const targets = item.querySelectorAll('[data-highlight-target]');
-    targets.forEach((target) => {
-      target.dataset.originalText = target.textContent || '';
-    });
-  });
-
-  const updateSearchResults = () => {
-    const query = normalize(searchInput.value);
-    const terms = query ? query.split(' ') : [];
-    let visibleCount = 0;
-
-    searchItems.forEach((item) => {
-      const text = item.dataset.searchText || '';
-      const isMatch = query && terms.every((term) => text.includes(term));
-      item.hidden = !isMatch;
-      if (isMatch) visibleCount += 1;
-
-      const targets = item.querySelectorAll('[data-highlight-target]');
-      targets.forEach((target) => {
-        const originalText = target.dataset.originalText || '';
-        target.innerHTML = isMatch ? highlightText(originalText, terms) : escapeHtml(originalText);
-      });
-    });
-
-    if (searchCount) {
-      searchCount.textContent = query
-        ? `${visibleCount} result${visibleCount === 1 ? '' : 's'}`
-        : 'Type to search posts.';
-    }
-
-    if (searchEmpty) {
-      searchEmpty.hidden = !query || visibleCount !== 0;
+  const clearResults = () => {
+    if (searchResults) {
+      searchResults.textContent = '';
     }
   };
 
-  searchInput.addEventListener('input', updateSearchResults);
-  updateSearchResults();
+  const setCountMessage = (message) => {
+    if (searchCount) {
+      searchCount.textContent = message;
+    }
+  };
+
+  const setLoadState = ({ loading = false, error = false }) => {
+    if (searchLoading) {
+      searchLoading.hidden = !loading;
+    }
+    if (searchError) {
+      searchError.hidden = !error;
+    }
+  };
+
+  const renderResults = (entries, terms) => {
+    if (!searchResults) return;
+    searchResults.textContent = '';
+    const fragment = document.createDocumentFragment();
+
+    entries.forEach((entry) => {
+      const item = document.createElement('li');
+      item.className = 'search-result';
+
+      const title = document.createElement('a');
+      title.href = entry.permalink;
+      title.innerHTML = highlightText(entry.title || '', terms);
+      item.appendChild(title);
+
+      const date = document.createElement('span');
+      date.className = 'muted';
+      date.textContent = entry.dateDisplay || '';
+      item.appendChild(date);
+
+      if (entry.summary) {
+        const summary = document.createElement('p');
+        summary.innerHTML = highlightText(entry.summary, terms);
+        item.appendChild(summary);
+      }
+
+      if (Array.isArray(entry.tags) && entry.tags.length) {
+        const tagContainer = document.createElement('div');
+        tagContainer.className = 'tags';
+        tagContainer.setAttribute('aria-label', 'Tags');
+
+        entry.tags.forEach((tag) => {
+          const tagName = tag && typeof tag.name === 'string' ? tag.name : '';
+          const tagPermalink = tag && typeof tag.permalink === 'string' ? tag.permalink : '';
+          if (!tagName || !tagPermalink) return;
+
+          const tagLink = document.createElement('a');
+          tagLink.href = tagPermalink;
+          tagLink.innerHTML = highlightText(`#${tagName}`, terms);
+          tagContainer.appendChild(tagLink);
+        });
+
+        if (tagContainer.childElementCount > 0) {
+          item.appendChild(tagContainer);
+        }
+      }
+
+      fragment.appendChild(item);
+    });
+
+    searchResults.appendChild(fragment);
+  };
+
+  const loadSearchIndex = async () => {
+    if (cachedIndex) return cachedIndex;
+    if (loadIndexPromise) return loadIndexPromise;
+
+    setLoadState({ loading: true, error: false });
+
+    loadIndexPromise = fetch(searchIndexPath, { credentials: 'same-origin' })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch search index: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((payload) => {
+        if (!Array.isArray(payload)) {
+          return [];
+        }
+
+        cachedIndex = payload.map((entry) => ({
+          ...entry,
+          searchTitle: normalize(typeof entry.searchTitle === 'string' ? entry.searchTitle : entry.title || ''),
+          searchTags: normalize(typeof entry.searchTags === 'string' ? entry.searchTags : ''),
+          searchSummary: normalize(typeof entry.searchSummary === 'string' ? entry.searchSummary : entry.summary || ''),
+          dateUnix: Number.isFinite(Number(entry.dateUnix)) ? Number(entry.dateUnix) : 0,
+        }));
+
+        hasLoadFailure = false;
+        return cachedIndex;
+      })
+      .catch(() => {
+        cachedIndex = [];
+        hasLoadFailure = true;
+        return cachedIndex;
+      })
+      .finally(() => {
+        setLoadState({ loading: false, error: hasLoadFailure });
+      });
+
+    return loadIndexPromise;
+  };
+
+  const scoreEntry = (entry, terms) => {
+    let totalScore = 0;
+
+    for (const term of terms) {
+      let termMatched = false;
+
+      for (const field of weightedFields) {
+        const fieldText = entry[field.key] || '';
+        if (!fieldText.includes(term)) continue;
+
+        termMatched = true;
+        totalScore += field.weight;
+        if (fieldText.startsWith(term)) {
+          totalScore += 1;
+        }
+      }
+
+      if (!termMatched) {
+        return null;
+      }
+    }
+
+    return totalScore;
+  };
+
+  const runSearch = async () => {
+    const runId = ++latestSearchRunId;
+    const query = normalize(searchInput.value);
+    const terms = tokenize(query);
+
+    if (!searchEnabled) {
+      clearResults();
+      if (searchEmpty) {
+        searchEmpty.hidden = true;
+      }
+      setLoadState({ loading: false, error: true });
+      setCountMessage('Search is disabled.');
+      return;
+    }
+
+    if (query.length < minQueryLength) {
+      clearResults();
+      if (searchEmpty) {
+        searchEmpty.hidden = true;
+      }
+      setLoadState({ loading: false, error: false });
+      setCountMessage(
+        minQueryLength > 1
+          ? `Type at least ${minQueryLength} characters to search posts.`
+          : 'Type to search posts.'
+      );
+      return;
+    }
+
+    const entries = await loadSearchIndex();
+    if (runId !== latestSearchRunId) return;
+
+    const matches = [];
+    entries.forEach((entry) => {
+      const score = scoreEntry(entry, terms);
+      if (score === null) return;
+      matches.push({ entry, score });
+    });
+
+    matches.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return (b.entry.dateUnix || 0) - (a.entry.dateUnix || 0);
+    });
+
+    const limitedMatches = matches.slice(0, maxResults).map((match) => match.entry);
+    renderResults(limitedMatches, terms);
+
+    if (searchCount) {
+      const totalCount = matches.length;
+      const suffix = totalCount === 1 ? '' : 's';
+      const limitSuffix =
+        totalCount > limitedMatches.length ? ` (showing first ${limitedMatches.length})` : '';
+      setCountMessage(`${totalCount} result${suffix}${limitSuffix}`);
+    }
+
+    if (searchEmpty) {
+      searchEmpty.hidden = matches.length !== 0;
+    }
+  };
+
+  if (!searchEnabled) {
+    searchInput.disabled = true;
+    setCountMessage('Search is disabled.');
+    if (searchEmpty) {
+      searchEmpty.hidden = true;
+    }
+    setLoadState({ loading: false, error: true });
+  } else {
+    const runSearchDebounced = debounce(runSearch, debounceMs);
+    searchInput.addEventListener('input', runSearchDebounced);
+    runSearch();
+  }
 }

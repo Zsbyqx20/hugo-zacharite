@@ -6,3 +6,24 @@
 [params.codeBlocks]
   lightStyle = "github"
   darkStyle = "monokai"
+
+[params.search]
+  enabled = true
+  indexPath = "/search-index.json"
+  debounceMs = 80
+  minQueryLength = 1
+  maxResults = 50
+
+[mediaTypes]
+  [mediaTypes."application/json"]
+    suffixes = ["json"]
+
+[outputFormats]
+  [outputFormats.SearchIndex]
+    mediaType = "application/json"
+    baseName = "search-index"
+    isPlainText = true
+    notAlternative = true
+
+[outputs]
+  home = ["HTML", "RSS", "SearchIndex"]
