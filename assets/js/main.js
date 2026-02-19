@@ -1,19 +1,21 @@
 const root = document.documentElement;
 root.classList.add('js');
 
-const THEME_MODES = ['light', 'dark'];
+const THEME_MODES = ['light', 'dark', 'auto'];
 const THEME_LABELS = {
-  light: 'Light',
-  dark: 'Dark',
+  light: 'Sun',
+  dark: 'Moon',
+  auto: 'Auto',
 };
+const THEME_CYCLE_ORDER = ['auto', 'light', 'dark'];
 const THEME_TRANSITION_DURATION_MS = 520;
 
 const getThemeConfig = () => {
   const config = window.__zachariteTheme || {};
   const defaultMode =
-    config.defaultMode === 'dark' || config.defaultMode === 'light'
+    config.defaultMode === 'dark' || config.defaultMode === 'light' || config.defaultMode === 'auto'
       ? config.defaultMode
-      : getPreferredColorScheme();
+      : 'auto';
   const storageKey =
     typeof config.storageKey === 'string' && config.storageKey.trim()
       ? config.storageKey.trim()
@@ -44,10 +46,13 @@ const persistThemeMode = (storageKey, mode) => {
   }
 };
 
+const getEffectiveThemeForMode = (mode) => (mode === 'auto' ? getPreferredColorScheme() : mode);
+
 const initThemeToggle = () => {
   const config = getThemeConfig();
   const themeToggle = document.querySelector('[data-theme-toggle]');
   const themeLabel = themeToggle ? themeToggle.querySelector('[data-theme-label]') : null;
+  const themeShortLabel = themeToggle ? themeToggle.querySelector('[data-theme-short-label]') : null;
   const themeIcons = themeToggle ? Array.from(themeToggle.querySelectorAll('[data-theme-icon]')) : [];
   const mediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
   const initialModeFromRoot = root.dataset.themeMode === 'auto' ? null : root.dataset.themeMode;
@@ -55,7 +60,7 @@ const initThemeToggle = () => {
 
   const setTheme = (mode, shouldPersist = false, shouldAnimate = false) => {
     const normalizedMode = THEME_MODES.includes(mode) ? mode : config.defaultMode;
-    const effectiveTheme = normalizedMode;
+    const effectiveTheme = getEffectiveThemeForMode(normalizedMode);
     const currentMode = root.dataset.theme === 'dark' ? 'dark' : 'light';
 
     if (themeToggle) {
@@ -63,7 +68,7 @@ const initThemeToggle = () => {
         clearTimeout(clearThemeAnimationTimer);
         clearThemeAnimationTimer = null;
       }
-      if (shouldAnimate && currentMode !== normalizedMode) {
+      if (shouldAnimate && currentMode !== effectiveTheme) {
         themeToggle.dataset.themeAnimating = 'true';
         clearThemeAnimationTimer = window.setTimeout(() => {
           delete themeToggle.dataset.themeAnimating;
@@ -79,14 +84,19 @@ const initThemeToggle = () => {
 
     if (themeToggle) {
       const label = THEME_LABELS[normalizedMode];
-      const nextMode = normalizedMode === 'dark' ? 'light' : 'dark';
+      const currentModeIndex = THEME_CYCLE_ORDER.indexOf(normalizedMode);
+      const nextMode = THEME_CYCLE_ORDER[(currentModeIndex + 1) % THEME_CYCLE_ORDER.length];
       const nextLabel = THEME_LABELS[nextMode];
 
       themeToggle.setAttribute('aria-label', `Theme ${label}. Activate to switch to ${nextLabel}.`);
-      themeToggle.setAttribute('aria-pressed', normalizedMode === 'dark' ? 'true' : 'false');
+      themeToggle.removeAttribute('aria-pressed');
       themeToggle.dataset.themeMode = normalizedMode;
+      themeToggle.dataset.themePreference = normalizedMode;
       if (themeLabel) {
         themeLabel.textContent = `Theme: ${label}`;
+      }
+      if (themeShortLabel) {
+        themeShortLabel.textContent = label;
       }
       themeIcons.forEach((icon) => {
         icon.hidden = icon.dataset.themeIcon !== normalizedMode;
@@ -113,8 +123,10 @@ const initThemeToggle = () => {
         : false;
       const canAnimateThemeTransition =
         typeof document.startViewTransition === 'function' && !prefersReducedMotion;
+      const nextEffectiveMode = getEffectiveThemeForMode(nextMode);
+      const currentEffectiveMode = root.dataset.theme === 'dark' ? 'dark' : 'light';
 
-      if (!canAnimateThemeTransition) {
+      if (!canAnimateThemeTransition || currentEffectiveMode === nextEffectiveMode) {
         setTheme(nextMode, true, true);
         return;
       }
@@ -152,8 +164,9 @@ const initThemeToggle = () => {
     };
 
     themeToggle.addEventListener('click', () => {
-      const currentMode = root.dataset.theme === 'dark' ? 'dark' : 'light';
-      const nextMode = currentMode === 'dark' ? 'light' : 'dark';
+      const currentMode = THEME_MODES.includes(root.dataset.themeMode) ? root.dataset.themeMode : config.defaultMode;
+      const currentModeIndex = THEME_CYCLE_ORDER.indexOf(currentMode);
+      const nextMode = THEME_CYCLE_ORDER[(currentModeIndex + 1) % THEME_CYCLE_ORDER.length];
       runThemeTransition(nextMode);
     });
   }
@@ -161,7 +174,7 @@ const initThemeToggle = () => {
   if (mediaQuery) {
     const syncAutoMode = () => {
       if (root.dataset.themeMode === 'auto') {
-        setTheme(getPreferredColorScheme());
+        setTheme('auto');
       }
     };
 

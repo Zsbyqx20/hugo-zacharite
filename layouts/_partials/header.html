@@ -16,11 +16,11 @@
     <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme">
       <span class="visually-hidden" data-theme-label>Theme</span>
       <span class="theme-switch-track" aria-hidden="true">
-        <span class="theme-switch-thumb">
-          <img class="theme-toggle-icon" data-theme-icon="light" src="{{ "sun.svg" | relURL }}" alt="" aria-hidden="true">
-          <img class="theme-toggle-icon" data-theme-icon="dark" src="{{ "moon.svg" | relURL }}" alt="" aria-hidden="true" hidden>
-        </span>
+        <img class="theme-toggle-icon" data-theme-icon="light" src="{{ "sun.svg" | relURL }}" alt="" aria-hidden="true">
+        <img class="theme-toggle-icon" data-theme-icon="dark" src="{{ "moon.svg" | relURL }}" alt="" aria-hidden="true" hidden>
+        <span class="theme-toggle-icon theme-toggle-auto-icon" data-theme-icon="auto" aria-hidden="true" hidden>A</span>
       </span>
+      <span class="theme-toggle-text" data-theme-short-label>Auto</span>
     </button>
     {{- end }}
   </div>
