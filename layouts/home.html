@@ -17,8 +17,9 @@
   <section>
     <h2>Recent posts</h2>
     {{ $posts := where site.RegularPages "Section" "posts" }}
+    {{ $recentPostsCount := int (or site.Params.homeRecentPostsCount 3) }}
     <ul class="post-list-compact">
-      {{ range first 3 ($posts.ByDate.Reverse) }}
+      {{ range first $recentPostsCount ($posts.ByDate.Reverse) }}
         <li>
           <a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>
           <span class="muted post-list-meta">

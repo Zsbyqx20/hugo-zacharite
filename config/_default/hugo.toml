@@ -7,6 +7,9 @@
   lightStyle = "github"
   darkStyle = "monokai"
 
+[params]
+  homeRecentPostsCount = 3
+
 [params.search]
   enabled = true
   indexPath = "/search-index.json"

@@ -1,11 +1,13 @@
 {{ define "main" }}
   <h1>#{{ .Title }}</h1>
+  {{ $paginator := .Paginate (.Pages.ByDate.Reverse) }}
   <ul class="post-list-compact">
-    {{ range .Pages.ByDate.Reverse }}
+    {{ range $paginator.Pages }}
       <li>
         <a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>
         <span class="muted">{{ .Date | time.Format ":date_medium" }}</span>
       </li>
     {{ end }}
   </ul>
+  {{ partial "pagination.html" $paginator }}
 {{ end }}
