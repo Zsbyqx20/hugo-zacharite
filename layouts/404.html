@@ -1,0 +1,11 @@
+{{ define "main" }}
+  <section class="intro">
+    <h1>Page not found</h1>
+    <p>That page doesn&rsquo;t exist, or it may have moved.</p>
+    <ul class="profile-links" aria-label="Suggested pages">
+      <li><a href="{{ "/" | relURL }}">Home</a></li>
+      <li><a href="{{ "/posts/" | relURL }}">All posts</a></li>
+      <li><a href="{{ "/search/" | relURL }}">Search</a></li>
+    </ul>
+  </section>
+{{ end }}

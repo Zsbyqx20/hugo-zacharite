@@ -1,0 +1,17 @@
+{{- /* Compact post rows shared by the home page and taxonomy term pages, so a
+     post renders identically wherever it is listed.
+     Params: pages (page collection), emptyMessage (optional string). */ -}}
+{{- $pages := .pages -}}
+<ul class="post-list-compact">
+  {{- range $pages }}
+    <li>
+      <a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>
+      <span class="muted post-list-meta">
+        <span class="post-list-date">{{ .Date | time.Format ":date_medium" }}</span>
+        <span class="post-list-count">{{ .WordCount }} {{ if .Param "isCJKLanguage" }}characters{{ else }}words{{ end }}</span>
+      </span>
+    </li>
+  {{- else }}
+    {{- with $.emptyMessage }}<li>{{ . | safeHTML }}</li>{{ end }}
+  {{- end }}
+</ul>

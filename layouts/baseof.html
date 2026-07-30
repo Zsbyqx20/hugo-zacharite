@@ -1,5 +1,9 @@
 <!DOCTYPE html>
-<html lang="{{ site.Language.LanguageCode }}" dir="{{ or site.Language.LanguageDirection `ltr` }}">
+{{- /* A page may declare its own `lang` in front matter (e.g. zh-CN posts on an
+     en-us site) so assistive tech uses the right pronunciation. Named
+     contentLang because `lang` is a reserved front-matter key in Hugo. */ -}}
+{{- $lang := or (.Param "contentLang") site.Language.Locale -}}
+<html lang="{{ $lang }}" dir="{{ or site.Language.Direction `ltr` }}">
 <head>
   {{ partial "head.html" . }}
 </head>

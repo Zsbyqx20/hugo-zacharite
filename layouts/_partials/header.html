@@ -6,19 +6,32 @@
         <img class="brand-avatar" src="{{ . | relURL }}" alt="" aria-hidden="true">
       {{ end }}
     </span>
-    {{ with site.Params.description }}<span class="brand-subtitle">{{ . }}</span>{{ end }}
+    {{- /* tagline only, deliberately not falling back to description: those are
+         different jobs, and setting a meta description should not silently add
+         visible header text. Unset tagline means no subtitle. */ -}}
+    {{ with site.Params.tagline }}<span class="brand-subtitle">{{ . }}</span>{{ end }}
   </a>
   <div class="header-controls">
     {{ partial "menu.html" (dict "menuID" "main" "page" .) }}
     {{- $themeParams := site.Params.theme | default dict -}}
     {{- $themeToggleEnabled := ne (default true (index $themeParams "enableToggle")) false -}}
     {{- if $themeToggleEnabled }}
-    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme">
-      <span class="visually-hidden" data-theme-label>Theme</span>
+    {{- /* No visually-hidden duplicate label: aria-label overrides element
+         content, and axe counts hidden text toward the visible label when
+         checking WCAG 2.5.3, which made the two disagree. */ -}}
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Auto theme. Activate to switch to Light.">
       <span class="theme-switch-track" aria-hidden="true">
         <img class="theme-toggle-icon" data-theme-icon="light" src="{{ "sun.svg" | relURL }}" alt="" aria-hidden="true">
         <img class="theme-toggle-icon" data-theme-icon="dark" src="{{ "moon.svg" | relURL }}" alt="" aria-hidden="true" hidden>
-        <span class="theme-toggle-icon theme-toggle-auto-icon" data-theme-icon="auto" aria-hidden="true" hidden>A</span>
+        {{- /* Inline SVG rather than a literal "A": text inside the button counts
+             toward the visible label in WCAG 2.5.3 checks even when
+             aria-hidden. currentColor also adapts to whichever theme auto
+             resolves to, unlike the fixed-fill sun/moon files. */ -}}
+        <svg class="theme-toggle-icon theme-toggle-auto-icon" data-theme-icon="auto" aria-hidden="true" hidden
+          viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="6"></circle>
+          <path d="M8 2a6 6 0 0 0 0 12z" fill="currentColor" stroke="none"></path>
+        </svg>
       </span>
       <span class="theme-toggle-text" data-theme-short-label>Auto</span>
     </button>

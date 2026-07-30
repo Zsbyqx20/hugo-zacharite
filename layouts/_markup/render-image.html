@@ -1,0 +1,51 @@
+{{- /*
+  Image render hook: serves resized WebP with a srcset for page-bundle images,
+  and always emits intrinsic dimensions + lazy loading to avoid layout shift.
+  Falls back to a plain <img> for remote URLs or non-resizable resources (SVG, GIF).
+*/ -}}
+{{- $alt := .Text -}}
+{{- $title := .Title -}}
+{{- $dest := .Destination -}}
+{{- $img := "" -}}
+{{- if not (urls.Parse $dest).Scheme -}}
+  {{- with .Page.Resources.GetMatch $dest -}}
+    {{- $img = . -}}
+  {{- else -}}
+    {{- with resources.Get $dest -}}
+      {{- $img = . -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $isResizable := and $img (eq $img.ResourceType "image") (not (in (slice "svg" "gif") (lower (path.Ext $dest | strings.TrimPrefix ".")))) -}}
+
+{{- if $isResizable -}}
+  {{- /* Content column is 760px, so 800w/1600w covers 1x and 2x. */ -}}
+  {{- $widths := slice 800 1600 -}}
+  {{- $variants := slice -}}
+  {{- range $widths -}}
+    {{- if ge $img.Width . -}}
+      {{- $variants = $variants | append ($img.Process (printf "resize %dx webp q80" .)) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if not $variants -}}
+    {{- $variants = slice ($img.Process "webp q80") -}}
+  {{- end -}}
+  {{- $primary := index $variants 0 -}}
+  {{- $srcset := slice -}}
+  {{- range $variants -}}
+    {{- $srcset = $srcset | append (printf "%s %dw" .RelPermalink .Width) -}}
+  {{- end -}}
+  <img
+    src="{{ $primary.RelPermalink }}"
+    {{ with $srcset }}srcset="{{ delimit . ", " }}"
+    sizes="(max-width: 760px) 100vw, 760px"{{ end }}
+    width="{{ $primary.Width }}"
+    height="{{ $primary.Height }}"
+    alt="{{ $alt }}"
+    {{ with $title }}title="{{ . }}"{{ end }}
+    loading="lazy"
+    decoding="async">
+{{- else -}}
+  <img src="{{ $dest | safeURL }}" alt="{{ $alt }}"{{ with $title }} title="{{ . }}"{{ end }} loading="lazy" decoding="async">
+{{- end -}}

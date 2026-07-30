@@ -4,7 +4,12 @@
   --text: #1d1d1b;
   --muted: #595751;
   --accent: #24396b;
-  --border: #d4d1c6;
+  /* --rule: decorative hairline dividers. --border: edges of interactive
+     controls, which must clear WCAG 1.4.11 non-text contrast (3:1). */
+  --rule: #d4d1c6;
+  --border: #8a8574;
+  /* Emphasis highlight behind <strong>; low alpha so text contrast is unchanged. */
+  --emphasis: rgba(36, 57, 107, 0.14);
   color-scheme: light;
   --font-main: Alegreya, "Noto Serif SC", Iowan Old Style, Palatino Linotype, Book Antiqua, Palatino, Georgia, serif;
   --font-mono: Cascadia Mono, "LXGW WenKai Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace;
@@ -16,7 +21,9 @@ html[data-theme="dark"] {
   --text: #f2f0e9;
   --muted: #c8c2b2;
   --accent: #9eb8ff;
-  --border: #59544b;
+  --rule: #59544b;
+  --border: #837c70;
+  --emphasis: rgba(158, 184, 255, 0.20);
   color-scheme: dark;
 }
 
@@ -36,7 +43,6 @@ html[data-theme="dark"] {
 
 body {
   margin: 0;
-  min-height: 100vh;
   background: var(--bg);
   color: var(--text);
   font: 18px/1.7 var(--font-main);
@@ -58,7 +64,7 @@ ol {
 blockquote {
   margin: 0 0 1rem;
   padding: 0.1rem 0 0.1rem 1rem;
-  border-left: 3px solid var(--border);
+  border-left: 3px solid var(--rule);
   color: var(--muted);
 }
 
@@ -111,7 +117,7 @@ a:focus-visible {
 .site-header {
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
 }
 
 .brand {
@@ -212,11 +218,7 @@ a:focus-visible {
 }
 
 .theme-toggle-auto-icon {
-  width: auto;
-  height: auto;
-  line-height: 1;
-  font-size: 0.68rem;
-  font-weight: 700;
+  color: var(--text);
 }
 
 .theme-toggle-text {
@@ -297,7 +299,7 @@ a:focus-visible {
   align-items: baseline;
   gap: 1rem;
   padding: 0.45rem 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
 }
 
 .post-list-compact li > a {
@@ -306,7 +308,7 @@ a:focus-visible {
 }
 
 .post-list-compact li:first-child {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--rule);
 }
 
 .post-list-meta {
@@ -415,7 +417,7 @@ a:focus-visible {
 }
 
 .search-result {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
   padding-bottom: 1rem;
 }
 
@@ -442,8 +444,22 @@ a:focus-visible {
   margin: 0.55rem 0 0.7rem;
 }
 
+.search-status p {
+  margin: 0;
+}
+
+.search-status p[hidden] {
+  display: none;
+}
+
+.search-result-snippet {
+  font-size: 0.95em;
+}
+
 .search-highlight {
   font-weight: 700;
+  background: var(--emphasis);
+  border-radius: 0.15rem;
 }
 
 .search-result-heading > a .search-highlight {
@@ -452,7 +468,7 @@ a:focus-visible {
 
 .post-card {
   padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
 }
 
 .post-card h2,
@@ -500,13 +516,21 @@ a:focus-visible {
 }
 
 .article-content {
-  overflow-wrap: anywhere;
+  /* break-word, not anywhere: `anywhere` also affects min-content sizing and
+     breaks Latin words at arbitrary points mid-prose. Long unbreakable strings
+     are handled per-element where they actually occur. */
+  overflow-wrap: break-word;
 }
 
-.article-content strong {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.12em;
+/* Underline is the link affordance here, so emphasis uses weight plus a tint
+   instead of borrowing it. A flat tint rather than a gradient underline: with
+   line-height 1.7 a gradient band lands mid-glyph on full-height CJK text. */
+.article-content strong,
+.prose strong {
+  font-weight: 700;
+  background: var(--emphasis);
+  border-radius: 0.15rem;
+  padding: 0 0.15em;
 }
 
 .article-license {
@@ -515,7 +539,9 @@ a:focus-visible {
 
 .back-to-top {
   position: fixed;
-  right: max(1rem, calc((100vw - 760px) / 2 + 1.4rem));
+  /* % resolves against the initial containing block, which excludes a classic
+     scrollbar; 100vw includes it and drifted the button off the shell gutter. */
+  right: max(1rem, calc((100% - 760px) / 2 + 1.4rem));
   bottom: 1.2rem;
   z-index: 20;
   display: inline-flex;
@@ -582,14 +608,14 @@ a:focus-visible {
 :not(pre) > code {
   padding: 0.12rem 0.36rem;
   border-radius: 0.35rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--rule);
   background: var(--surface);
 }
 
 .highlight,
 .chroma {
   margin: 1rem 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--rule);
   border-radius: 0.55rem;
   overflow-x: auto;
 }
@@ -629,7 +655,7 @@ pre {
 .site-footer {
   margin-top: 2.5rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--rule);
   color: var(--muted);
   font-size: 0.85rem;
   font-family: var(--font-mono);

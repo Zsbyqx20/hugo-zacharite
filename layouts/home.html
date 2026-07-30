@@ -18,18 +18,9 @@
     <h2>Recent posts</h2>
     {{ $posts := where site.RegularPages "Section" "posts" }}
     {{ $recentPostsCount := int (or site.Params.homeRecentPostsCount 3) }}
-    <ul class="post-list-compact">
-      {{ range first $recentPostsCount ($posts.ByDate.Reverse) }}
-        <li>
-          <a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>
-          <span class="muted post-list-meta">
-            <span class="post-list-date">{{ .Date | time.Format ":date_medium" }}</span>
-            <span class="post-list-count">{{ .WordCount }} {{ if .Param "isCJKLanguage" }}characters{{ else }}words{{ end }}</span>
-          </span>
-        </li>
-      {{ else }}
-        <li>No posts yet. Create one with <code>hugo new content posts/my-first-post.md</code>.</li>
-      {{ end }}
-    </ul>
+    {{ partial "post-list-compact.html" (dict
+      "pages" (first $recentPostsCount ($posts.ByDate.Reverse))
+      "emptyMessage" "No posts yet. Create one with <code>hugo new content posts/my-first-post.md</code>."
+    ) }}
   </section>
 {{ end }}

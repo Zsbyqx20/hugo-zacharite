@@ -2,9 +2,10 @@ const root = document.documentElement;
 root.classList.add('js');
 
 const THEME_MODES = ['light', 'dark', 'auto'];
+// State names, not icon names: these are read aloud by screen readers.
 const THEME_LABELS = {
-  light: 'Sun',
-  dark: 'Moon',
+  light: 'Light',
+  dark: 'Dark',
   auto: 'Auto',
 };
 const THEME_CYCLE_ORDER = ['auto', 'light', 'dark'];
@@ -88,18 +89,23 @@ const initThemeToggle = () => {
       const nextMode = THEME_CYCLE_ORDER[(currentModeIndex + 1) % THEME_CYCLE_ORDER.length];
       const nextLabel = THEME_LABELS[nextMode];
 
-      themeToggle.setAttribute('aria-label', `Theme ${label}. Activate to switch to ${nextLabel}.`);
+      // WCAG 2.5.3 (Label in Name): the accessible name must start with the
+      // button's visible text, which is `label`.
+      themeToggle.setAttribute('aria-label', `${label} theme. Activate to switch to ${nextLabel}.`);
       themeToggle.removeAttribute('aria-pressed');
       themeToggle.dataset.themeMode = normalizedMode;
       themeToggle.dataset.themePreference = normalizedMode;
       if (themeLabel) {
-        themeLabel.textContent = `Theme: ${label}`;
+        themeLabel.textContent = `${label} theme`;
       }
       if (themeShortLabel) {
         themeShortLabel.textContent = label;
       }
       themeIcons.forEach((icon) => {
-        icon.hidden = icon.dataset.themeIcon !== normalizedMode;
+        // toggleAttribute, not `.hidden`: SVGElement has no `hidden` IDL
+        // property, so assigning it would set a JS expando and leave the
+        // attribute (and display: none) in place.
+        icon.toggleAttribute('hidden', icon.dataset.themeIcon !== normalizedMode);
       });
     }
 
@@ -244,11 +250,14 @@ if (searchInput) {
   const searchEmpty = document.querySelector('[data-search-empty]');
   const searchLoading = document.querySelector('[data-search-loading]');
   const searchError = document.querySelector('[data-search-error]');
+  const searchStatus = document.getElementById('search-status');
   const weightedFields = [
     { key: 'searchTitle', weight: 6 },
     { key: 'searchTags', weight: 4 },
     { key: 'searchSummary', weight: 2 },
+    { key: 'searchBody', weight: 1 },
   ];
+  const SNIPPET_RADIUS = 70;
   let cachedIndex = null;
   let loadIndexPromise = null;
   let latestSearchRunId = 0;
@@ -291,6 +300,33 @@ if (searchInput) {
       .join('');
   };
 
+  // When a term only matches the body, show the surrounding text instead of the
+  // static summary so the result explains itself.
+  const buildSnippet = (entry, terms) => {
+    if (!entry.body || !entry.searchBody) return '';
+
+    let matchIndex = -1;
+    let matchLength = 0;
+    for (const term of terms) {
+      // Already visible in the highlighted title or summary: no snippet needed.
+      if (entry.searchTitle && entry.searchTitle.includes(term)) continue;
+      if (entry.searchTags && entry.searchTags.includes(term)) continue;
+      if (entry.searchSummary && entry.searchSummary.includes(term)) continue;
+      const found = entry.searchBody.indexOf(term);
+      if (found !== -1 && (matchIndex === -1 || found < matchIndex)) {
+        matchIndex = found;
+        matchLength = term.length;
+      }
+    }
+    if (matchIndex === -1) return '';
+
+    const start = Math.max(0, matchIndex - SNIPPET_RADIUS);
+    const end = Math.min(entry.body.length, matchIndex + matchLength + SNIPPET_RADIUS);
+    const prefix = start > 0 ? '…' : '';
+    const suffix = end < entry.body.length ? '…' : '';
+    return `${prefix}${entry.body.slice(start, end).trim()}${suffix}`;
+  };
+
   const clearResults = () => {
     if (searchResults) {
       searchResults.textContent = '';
@@ -309,6 +345,13 @@ if (searchInput) {
     }
     if (searchError) {
       searchError.hidden = !error;
+    }
+    if (searchPanel) {
+      if (loading) {
+        searchPanel.setAttribute('aria-busy', 'true');
+      } else {
+        searchPanel.removeAttribute('aria-busy');
+      }
     }
   };
 
@@ -336,9 +379,14 @@ if (searchInput) {
 
       item.appendChild(heading);
 
-      if (entry.summary) {
+      const snippet = buildSnippet(entry, terms);
+      const excerpt = snippet || entry.summary;
+      if (excerpt) {
         const summary = document.createElement('p');
-        summary.innerHTML = highlightText(entry.summary, terms);
+        if (snippet) {
+          summary.className = 'search-result-snippet';
+        }
+        summary.innerHTML = highlightText(excerpt, terms);
         item.appendChild(summary);
       }
 
@@ -389,9 +437,13 @@ if (searchInput) {
 
         cachedIndex = payload.map((entry) => ({
           ...entry,
+          body: typeof entry.body === 'string' ? entry.body : '',
           searchTitle: normalize(typeof entry.searchTitle === 'string' ? entry.searchTitle : entry.title || ''),
           searchTags: normalize(typeof entry.searchTags === 'string' ? entry.searchTags : ''),
           searchSummary: normalize(typeof entry.searchSummary === 'string' ? entry.searchSummary : entry.summary || ''),
+          // Derived from body (not normalized separately) so snippet offsets
+          // found in searchBody stay valid indexes into body.
+          searchBody: (typeof entry.body === 'string' ? entry.body : '').toLowerCase(),
           dateUnix: Number.isFinite(Number(entry.dateUnix)) ? Number(entry.dateUnix) : 0,
         }));
 

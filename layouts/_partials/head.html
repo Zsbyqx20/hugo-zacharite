@@ -1,6 +1,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="{{ with site.Params.description }}{{ . }}{{ else }}{{ site.Title }}{{ end }}">
+{{- /* Per-page description first, then the page's own summary, then the site
+     default. Without this every page shared one generic description. */ -}}
+{{- $description := "" -}}
+{{- with .Description -}}
+  {{- $description = . -}}
+{{- else -}}
+  {{- if and (not .IsHome) .Content .Summary -}}
+    {{- $description = .Summary | plainify | htmlUnescape | replaceRE "\\s+" " " | strings.TrimSpace | truncate 160 -}}
+  {{- else -}}
+    {{- $description = or site.Params.description site.Title -}}
+  {{- end -}}
+{{- end -}}
+<meta name="description" content="{{ $description }}">
 {{- $blockAllBots := site.Params.robots.blockAllBots -}}
 {{- if or $blockAllBots (.Param "robotsNoIndex") -}}
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
@@ -8,8 +20,19 @@
 {{- end -}}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;500;700&family=Cascadia+Mono:wght@400;600;700&family=Noto+Serif+SC:wght@200..900&display=swap">
-<link href="https://fontsapi.zeoseven.com/293/main/result.css" onload="this.rel='stylesheet'" rel="preload" as="style" crossorigin />
+{{- /* Both font stylesheets load non-blocking: the Google request alone is
+     ~133KB of CSS (Noto Serif SC is 113KB of it, split into 101 subsets), which
+     is far too much to sit in the critical path. font-display: swap means text
+     paints in the fallback serif and reflows once the webfont lands.
+     <noscript> keeps webfonts working without JS. */ -}}
+{{- $googleFonts := "https://fonts.googleapis.com/css2?family=Alegreya:wght@400;500;700&family=Cascadia+Mono:wght@400;600;700&family=Noto+Serif+SC:wght@200..900&display=swap" -}}
+{{- $zeoseven := "https://fontsapi.zeoseven.com/293/main/result.css" -}}
+<link rel="preload" as="style" href="{{ $googleFonts | safeURL }}" onload="this.rel='stylesheet'">
+<link rel="preload" as="style" href="{{ $zeoseven }}" onload="this.rel='stylesheet'" crossorigin>
+<noscript>
+  <link rel="stylesheet" href="{{ $googleFonts | safeURL }}">
+  <link rel="stylesheet" href="{{ $zeoseven }}" crossorigin>
+</noscript>
 <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s · %s" .Title site.Title }}{{ end }}</title>
 {{- $themeParams := site.Params.theme | default dict -}}
 {{- $themeDefault := lower (default "auto" (index $themeParams "default")) -}}

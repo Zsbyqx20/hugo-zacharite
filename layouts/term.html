@@ -1,13 +1,7 @@
 {{ define "main" }}
-  <h1>#{{ .Title }}</h1>
+  <h1 class="page-title">#{{ .Title }}</h1>
+  {{ with .Content }}<div class="prose page-prose">{{ . }}</div>{{ end }}
   {{ $paginator := .Paginate (.Pages.ByDate.Reverse) }}
-  <ul class="post-list-compact">
-    {{ range $paginator.Pages }}
-      <li>
-        <a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>
-        <span class="muted">{{ .Date | time.Format ":date_medium" }}</span>
-      </li>
-    {{ end }}
-  </ul>
+  {{ partial "post-list-compact.html" (dict "pages" $paginator.Pages) }}
   {{ partial "pagination.html" $paginator }}
 {{ end }}

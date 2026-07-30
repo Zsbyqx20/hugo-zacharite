@@ -2,6 +2,10 @@
 {{- $posts := where site.RegularPages "Section" "posts" -}}
 {{- range $posts.ByDate.Reverse -}}
   {{- $summary := .Summary | plainify | htmlUnescape | replaceRE "\\s+" " " | strings.TrimSpace | truncate 160 -}}
+  {{- /* Full body text so matches past the opening paragraph are findable.
+       Capped to keep the index a reasonable lazy-loaded download. */ -}}
+  {{- $body := .Plain | htmlUnescape | replaceRE "\\s+" " " | strings.TrimSpace -}}
+  {{- $body = substr $body 0 20000 -}}
   {{- $tagNames := slice -}}
   {{- $tagLinks := slice -}}
   {{- with .GetTerms "tags" -}}
@@ -20,6 +24,7 @@
     "searchTitle" (.LinkTitle | plainify | htmlUnescape | lower)
     "searchTags" (delimit $tagNames " " | plainify | htmlUnescape | lower)
     "searchSummary" ($summary | lower)
+    "body" $body
   ) -}}
 {{- end -}}
 {{- $entries | jsonify -}}
