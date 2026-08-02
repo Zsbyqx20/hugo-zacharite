@@ -1,0 +1,17 @@
+:lang(zh) .article {
+  text-spacing-trim: normal;
+}
+
+/* Older engines can still use a font's contextual half-width punctuation
+   alternates. Unsupported fonts leave the text unchanged. */
+@supports not (text-spacing-trim: normal) {
+  :lang(zh) .article {
+    font-feature-settings: "chws";
+  }
+}
+
+.cjk-punctuation-halfwidth {
+  text-spacing-trim: space-all;
+  font-feature-settings: "halt";
+  font-kerning: none;
+}

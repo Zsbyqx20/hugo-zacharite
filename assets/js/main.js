@@ -1,3 +1,8 @@
+import {
+  getSupplementalTrimIndexes,
+  resolveCjkPunctuationProfile,
+} from './cjk-punctuation.mjs';
+
 const root = document.documentElement;
 root.classList.add('js');
 
@@ -224,6 +229,93 @@ const initBackToTop = () => {
 };
 
 initBackToTop();
+
+const initCjkPunctuationSpacing = () => {
+  const article = document.querySelector('.article');
+  if (!article || typeof document.createTreeWalker !== 'function') return;
+
+  const writingMode = window.getComputedStyle
+    ? window.getComputedStyle(article).writingMode
+    : 'horizontal-tb';
+  const profile = resolveCjkPunctuationProfile(root.lang, writingMode);
+  if (!profile) return;
+
+  const excludedSelector =
+    'code, pre, kbd, samp, script, style, textarea, ruby, rt, rp, .chroma, .highlight, .cjk-punctuation-halfwidth';
+  const boundarySelector =
+    'br, wbr, hr, img, svg, video, audio, iframe, canvas, input, select, button';
+  const blockSelector = 'p, h1, h2, h3, h4, h5, h6, li, dt, dd, figcaption, summary, td, th';
+  const walker = document.createTreeWalker(article, 5);
+  const tokensByBlock = new Map();
+  let currentNode = walker.nextNode();
+
+  const getBlockTokens = (node) => {
+    const parent = node.nodeType === 1 ? node : node.parentElement;
+    const block = parent.closest(blockSelector) || article;
+    const tokens = tokensByBlock.get(block) || [];
+    tokensByBlock.set(block, tokens);
+    return tokens;
+  };
+
+  const addBoundary = (node) => {
+    const tokens = getBlockTokens(node);
+    if (tokens.length > 0 && tokens[tokens.length - 1] !== null) tokens.push(null);
+  };
+
+  while (currentNode) {
+    if (currentNode.nodeType === 1) {
+      if (currentNode.matches(boundarySelector) || currentNode.matches(excludedSelector)) {
+        addBoundary(currentNode);
+      }
+    } else if (currentNode.parentElement.closest(excludedSelector)) {
+      addBoundary(currentNode);
+    } else {
+      const tokens = getBlockTokens(currentNode);
+      Array.from(currentNode.nodeValue).forEach((character, index) => {
+        tokens.push({ character, index, node: currentNode });
+      });
+    }
+
+    currentNode = walker.nextNode();
+  }
+
+  tokensByBlock.forEach((tokens) => {
+    const trimIndexes = getSupplementalTrimIndexes(
+      tokens.map((token) => (token ? token.character : null)),
+      profile
+    );
+    const indexesByNode = new Map();
+
+    trimIndexes.forEach((tokenIndex) => {
+      const token = tokens[tokenIndex];
+      const indexes = indexesByNode.get(token.node) || new Set();
+      indexes.add(token.index);
+      indexesByNode.set(token.node, indexes);
+    });
+
+    indexesByNode.forEach((indexes, node) => {
+      const fragment = document.createDocumentFragment();
+      let textBuffer = '';
+
+      Array.from(node.nodeValue).forEach((character, index) => {
+        if (indexes.has(index)) {
+          fragment.append(textBuffer);
+          textBuffer = '';
+          const span = document.createElement('span');
+          span.className = 'cjk-punctuation-halfwidth';
+          span.textContent = character;
+          fragment.append(span);
+        } else {
+          textBuffer += character;
+        }
+      });
+      fragment.append(textBuffer);
+      node.replaceWith(fragment);
+    });
+  });
+};
+
+initCjkPunctuationSpacing();
 
 const searchInput = document.querySelector('[data-search-input]');
 

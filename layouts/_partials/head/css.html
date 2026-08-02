@@ -1,5 +1,6 @@
 {{- $main := resources.Get "css/main.css" -}}
 {{- $accessibility := resources.Get "css/accessibility.css" -}}
+{{- $cjkTypography := resources.Get "css/cjk-typography.css" -}}
 {{- $codeParams := site.Params.codeBlocks | default dict -}}
 {{- $lightStyle := lower (default "github" (index $codeParams "lightStyle")) -}}
 {{- $darkStyle := lower (default "monokai" (index $codeParams "darkStyle")) -}}
@@ -18,7 +19,7 @@
   {{- $darkTheme = resources.Get "css/chroma/dark/monokai.css" -}}
 {{- end -}}
 
-{{- $styles := slice $main $accessibility $lightTheme $darkTheme | resources.Concat "css/site.css" -}}
+{{- $styles := slice $main $accessibility $cjkTypography $lightTheme $darkTheme | resources.Concat "css/site.css" -}}
 {{- if hugo.IsDevelopment }}
   <link rel="stylesheet" href="{{ $styles.RelPermalink }}">
 {{- else }}

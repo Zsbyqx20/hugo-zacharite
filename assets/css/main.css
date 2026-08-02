@@ -46,6 +46,28 @@ body {
   background: var(--bg);
   color: var(--text);
   font: 18px/1.7 var(--font-main);
+
+  /* CJK/Latin typography. Verified in Chromium 151, WebKit 26, Firefox 144.
+     text-autospace inserts 0.125em at Han<->Latin/digit boundaries. The spec's
+     initial value is `normal`, but engines compute `no-autospace` for web-compat,
+     so this must be set explicitly to take effect. It does NOT stack with a
+     space already present in the source, so hand-spaced text is unaffected.
+     Firefox has no support yet and simply renders as before.
+     line-break: strict applies full kinsoku rules, so small kana and characters
+     like ー・々 cannot begin a line. Supported in all three engines. */
+  text-autospace: normal;
+  line-break: strict;
+}
+
+/* Autospace applies inside code as well, where inserted spacing would
+   misrepresent the code. Opt out everywhere code is rendered verbatim. */
+code,
+pre,
+kbd,
+samp,
+.chroma,
+.highlight {
+  text-autospace: no-autospace;
 }
 
 h1,
@@ -53,6 +75,9 @@ h2,
 h3 {
   line-height: 1.3;
   margin: 0 0 0.75rem;
+  /* Even line lengths matter more in short headings than in body copy.
+     Ignored where unsupported (Firefox), which is a no-op rather than a fallback. */
+  text-wrap: balance;
 }
 
 p,
@@ -520,6 +545,8 @@ a:focus-visible {
      breaks Latin words at arbitrary points mid-prose. Long unbreakable strings
      are handled per-element where they actually occur. */
   overflow-wrap: break-word;
+  /* Avoids single-word last lines. Chromium/WebKit only; no-op in Firefox. */
+  text-wrap: pretty;
 }
 
 /* Underline is the link affordance here, so emphasis uses weight plus a tint
