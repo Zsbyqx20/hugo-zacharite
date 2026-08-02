@@ -8,9 +8,10 @@
   {{ partial "head.html" . }}
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
   <div class="site-shell">
     {{ partial "header.html" . }}
-    <main class="content" aria-label="Content">
+    <main id="main-content" class="content" tabindex="-1" aria-label="Content">
       {{ block "main" . }}{{ end }}
     </main>
     {{ partial "footer.html" . }}
